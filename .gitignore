@@ -1,0 +1,19 @@
+# Generated files
+node_modules/
+*.log
+main.js
+*.js.map
+
+# Editor
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+
+# Test outputs
+coverage/
+.eslintcache
+
+# OS
+Thumbs.db

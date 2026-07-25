@@ -1,0 +1,11 @@
+{
+  "id": "picfast-image-uploader",
+  "name": "PicFast Image Uploader",
+  "version": "0.1.0",
+  "minAppVersion": "1.5.0",
+  "description": "Paste or drop images into the editor to upload them to your PicFast instance and insert the public URL — no PicGo required.",
+  "author": "atbeta",
+  "authorUrl": "https://github.com/atbeta",
+  "fundingUrl": "https://github.com/sponsors/atbeta",
+  "isDesktopOnly": false
+}
