@@ -65,16 +65,16 @@ export const zhCN: typeof en = {
   settingBaseUrl: "Base URL",
   settingBaseUrlDesc:
     "你的 PicFast 实例地址，例如 https://picfast.example.com。" +
-    "留空时自动从 PICFAST_URL 环境变量或 `picfast` CLI 配置读取。",
+    "留空时自动从 PICFAST_URL 环境变量或 picfast CLI 配置读取。",
   settingApiToken: "API token",
   settingApiTokenDesc:
     "可选。匿名上传留空；如果你的实例需要鉴权则填写。" +
-    "自动从 PICFAST_TOKEN 环境变量或 `picfast` CLI 配置读取。",
+    "自动从 PICFAST_TOKEN 环境变量或 picfast CLI 配置读取。",
   settingApiTokenPlaceholder: "可选",
   settingUploadBehavior: "上传行为",
   settingUploadBehaviorDesc:
-    "粘贴或拖入图片时的默认行为。Ask 会弹一个 1-click 小菜单让你选择。",
-  settingUploadBehaviorOptionOff: "Off（使用 Obsidian 默认行为）",
+    "粘贴或拖入图片时的默认行为。Ask 模式每次都会弹出一个简短菜单供你选择。",
+  settingUploadBehaviorOptionOff: "关闭（Obsidian 默认行为）",
   settingUploadBehaviorOptionAsk: "每次询问（推荐）",
   settingUploadBehaviorOptionOn: "总是上传",
 };
