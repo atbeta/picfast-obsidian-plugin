@@ -33,7 +33,7 @@ import {
   saveSettings,
 } from "./settings";
 
-export class PicFastImageUploaderPlugin extends Plugin {
+export default class PicFastImageUploaderPlugin extends Plugin {
   settings: PicFastSettings = DEFAULT_SETTINGS;
 
   async onload(): Promise<void> {

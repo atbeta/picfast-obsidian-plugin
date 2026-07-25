@@ -11,7 +11,7 @@ import {
   UploadBehavior,
   InsertFormat,
 } from "./settings";
-import { PicFastImageUploaderPlugin } from "./main";
+import PicFastImageUploaderPlugin from "./main";
 
 export class PicFastSettingTab extends PluginSettingTab {
   plugin: PicFastImageUploaderPlugin;
