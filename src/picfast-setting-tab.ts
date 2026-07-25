@@ -1,16 +1,13 @@
 /**
- * Settings tab — exposes the four user-visible options in Obsidian's
- * Settings dialog. Wires each control back to plugin settings and
- * persists via saveSettings().
+ * Settings tab — exposes the three user-visible options in Obsidian's
+ * Settings dialog. Each control writes back to the plugin's settings
+ * and persists via persistSettings().
  */
 
 import { App, PluginSettingTab, Setting } from "obsidian";
 
 import { t } from "./i18n";
-import {
-  UploadBehavior,
-  InsertFormat,
-} from "./settings";
+import { UploadBehavior } from "./settings";
 import PicFastImageUploaderPlugin from "./main";
 
 export class PicFastSettingTab extends PluginSettingTab {
@@ -62,39 +59,9 @@ export class PicFastSettingTab extends PluginSettingTab {
           .addOption("on", "Always upload")
           .setValue(this.plugin.settings.uploadBehavior)
           .onChange(async (value) => {
-            const v = value as UploadBehavior;
-            this.plugin.settings.uploadBehavior = v;
-            await this.plugin.persistSettings();
-            // Handlers are re-registered on the next load; we don't tear them
-            // down live because the editor instance outlives this change.
-          }),
-      );
-
-    new Setting(containerEl)
-      .setName(t().settingDefaultFormat)
-      .setDesc(t().settingDefaultFormatDesc)
-      .addDropdown((dropdown) =>
-        dropdown
-          .addOption("markdown", "Markdown — ![](url)")
-          .addOption("url", "Bare URL")
-          .addOption("html", "HTML — <img>")
-          .addOption("bbcode", "BBCode — [img]url[/img]")
-          .setValue(this.plugin.settings.defaultFormat)
-          .onChange(async (value) => {
-            this.plugin.settings.defaultFormat = value as InsertFormat;
+            this.plugin.settings.uploadBehavior = value as UploadBehavior;
             await this.plugin.persistSettings();
           }),
       );
-
-    const info = containerEl.createDiv({ cls: "setting-item" });
-    info.createDiv({
-      cls: "setting-item-info",
-      text: t().settingCliAuto,
-    });
-    const ctrl = info.createDiv({ cls: "setting-item-control" });
-    ctrl.createDiv({
-      cls: "setting-item-description",
-      text: t().settingCliAutoDesc,
-    });
   }
 }

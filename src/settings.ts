@@ -1,31 +1,29 @@
 /**
  * Plugin settings — types, defaults, load/save helpers.
  *
- * The four user-visible settings map 1:1 to the `PicFast` section in
- * Obsidian's Settings tab. All other config (request timeout, upload path)
- * is fixed at build time so users never have to think about it.
+ * Only the four (now three) user-visible fields live here. The upload
+ * path is hard-coded to /api/v1/flat/upload and the insert format is
+ * always markdown — Obsidian is a markdown editor, no one picks "html"
+ * or "bbcode" here.
  */
 
 import { Plugin } from "obsidian";
 
 export const CONFIG_SECTION = "picfast";
-export const UPLOAD_PATH = "/api/v1/upload";
+export const UPLOAD_PATH = "/api/v1/flat/upload";
 
 /**
  * Upload behavior on paste / drop:
  *   - off:  handler is not registered; Obsidian default behaviour runs.
  *   - ask:  show a small menu ("Upload to PicFast" / "Save locally" / "Cancel").
- *   - on:   upload immediately, insert the returned markdown link.
+ *   - on:   upload immediately, insert `![](url)`.
  */
 export type UploadBehavior = "off" | "ask" | "on";
-
-export type InsertFormat = "url" | "markdown" | "html" | "bbcode";
 
 export interface PicFastSettings {
   baseUrl: string;
   apiToken: string;
   uploadBehavior: UploadBehavior;
-  defaultFormat: InsertFormat;
   timeoutMs: number;
 }
 
@@ -33,7 +31,6 @@ export const DEFAULT_SETTINGS: PicFastSettings = {
   baseUrl: "",
   apiToken: "",
   uploadBehavior: "ask",
-  defaultFormat: "markdown",
   timeoutMs: 30000,
 };
 
@@ -45,7 +42,6 @@ export async function loadSettings(
     baseUrl: (raw.baseUrl ?? "").toString().trim(),
     apiToken: (raw.apiToken ?? "").toString().trim(),
     uploadBehavior: normalizeBehavior(raw.uploadBehavior),
-    defaultFormat: normalizeFormat(raw.defaultFormat),
     timeoutMs: clampInt(raw.timeoutMs, 5000, 120000, 30000),
   };
 }
@@ -67,12 +63,6 @@ export function stripTrailingSlash(s: string): string {
 
 function normalizeBehavior(v: unknown): UploadBehavior {
   return v === "off" || v === "on" || v === "ask" ? v : "ask";
-}
-
-function normalizeFormat(v: unknown): InsertFormat {
-  return v === "url" || v === "html" || v === "bbcode" || v === "markdown"
-    ? v
-    : "markdown";
 }
 
 function clampInt(

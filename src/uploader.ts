@@ -2,9 +2,14 @@
  * Upload a single image to a PicFast instance via Obsidian's requestUrl
  * (which uses Node's net stack and sidesteps browser CORS).
  *
- * The server returns the full `imageResponse` shape (see
- * picfast/internal/handler/dto.go): we only need `links.markdown` for
- * insertion; everything else is ignored.
+ * Uses POST /api/v1/flat/upload. The flat handler returns a flat JSON
+ * shape `{ url, markdown, html, bbcode, thumbnail_url }` with no
+ * `links` wrapper, which is simpler to consume.
+ *
+ * Multipart body is built by hand because Obsidian's `requestUrl.body`
+ * only accepts `string | ArrayBuffer` — there is no automatic
+ * FormData serialization, and a cast won't save us server-side
+ * (server expects a real Content-Type + boundary header).
  */
 
 import { requestUrl, RequestUrlParam } from "obsidian";
@@ -26,29 +31,25 @@ export class PicFastUploadError extends Error {
 }
 
 export interface UploadResult {
-  /** `links.markdown` from the server response, e.g. `![](https://...)`. */
+  /** Markdown link, e.g. `![](https://...)`. */
   markdown: string;
-  /** `links.url` for callers that want the bare URL. */
+  /** Bare image URL. */
   url: string;
-  /** `links.thumbnail_url` when available. */
+  /** Optional thumbnail URL. */
   thumbnailUrl?: string;
-  /** Server-assigned mime, useful for diagnostics. */
-  mimetype: string;
 }
 
-interface ServerImageResponse {
-  links?: {
-    markdown?: string;
-    url?: string;
-    thumbnail_url?: string;
-  };
-  mimetype?: string;
+interface FlatServerResponse {
+  url?: string;
+  markdown?: string;
+  html?: string;
+  bbcode?: string;
+  thumbnail_url?: string;
 }
 
 /**
- * Upload an `ArrayBuffer` (or `Uint8Array`) of image bytes under the given
- * filename. Resolves with the upload result or rejects with a
- * PicFastUploadError describing the failure.
+ * Upload an `ArrayBuffer` / `Uint8Array` of image bytes under the given
+ * filename. Returns the parsed response or throws a `PicFastUploadError`.
  */
 export async function uploadImage(
   data: ArrayBuffer | Uint8Array,
@@ -62,58 +63,107 @@ export async function uploadImage(
   }
 
   const bytes =
-    data instanceof Uint8Array
-      ? new Uint8Array(data)
-      : new Uint8Array(data);
+    data instanceof Uint8Array ? data : new Uint8Array(data);
 
-  const blob = new Blob([bytes], {
-    type: guessMimeFromName(filename),
-  });
-  const form = new FormData();
-  form.append("file", blob, filename);
+  const mimetype = guessMimeFromName(filename);
+  const body = buildMultipartBody(bytes, filename, mimetype);
 
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    "Content-Type": `multipart/form-data; boundary=${BOUNDARY}`,
+  };
   if (settings.apiToken) {
     headers["Authorization"] = `Bearer ${settings.apiToken}`;
   }
 
-  const params = {
+  const params: RequestUrlParam = {
     url: getUploadUrl(settings.baseUrl),
     method: "POST",
-    body: form as unknown as ArrayBuffer,
+    body,
     headers,
     throw: false,
-  } as unknown as RequestUrlParam;
+  };
 
   const response = await requestUrl(params);
   const status = response.status;
-  const json = safeJson<ServerImageResponse>(response);
+  const json = safeJson<FlatServerResponse>(response);
 
   if (status < 200 || status >= 300) {
     const msg =
-      json && typeof (json as unknown as { error?: string }).error === "string"
-        ? (json as unknown as { error: string }).error
-        : `${status} ${response.text?.slice(0, 200) ?? ""}`;
+      (json as unknown as { error?: string } | null)?.error ??
+      response.text?.slice(0, 200) ??
+      `HTTP ${status}`;
     throw new PicFastUploadError(`PicFast upload failed: ${msg}`, {
       httpStatus: status,
       serverMessage: msg,
     });
   }
 
-  const links = json?.links;
-  if (!links?.markdown || !links.url) {
+  if (!json?.markdown || !json.url) {
     throw new PicFastUploadError(
-      "PicFast response missing `links.markdown` / `links.url`. " +
+      "PicFast response missing `markdown` / `url`. " +
         "Server may be on an older version (need 0.18+).",
     );
   }
 
   return {
-    markdown: links.markdown,
-    url: links.url,
-    thumbnailUrl: links.thumbnail_url,
-    mimetype: json?.mimetype ?? guessMimeFromName(filename),
+    markdown: json.markdown,
+    url: json.url,
+    thumbnailUrl: json.thumbnail_url,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Multipart construction
+
+// Same boundary for both header / footer so the body is a single buffer.
+const BOUNDARY = "----PicFastObsidianPlugin" + Date.now().toString(36);
+
+function buildMultipartBody(
+  bytes: Uint8Array,
+  filename: string,
+  mimetype: string,
+): ArrayBuffer {
+  const encoder = new TextEncoder();
+  const partHeader =
+    `--${BOUNDARY}\r\n` +
+    `Content-Disposition: form-data; name="file"; filename="${escapeFilename(filename)}"\r\n` +
+    `Content-Type: ${mimetype}\r\n` +
+    `\r\n`;
+  const partFooter = `\r\n--${BOUNDARY}--\r\n`;
+
+  const headerBytes = encoder.encode(partHeader);
+  const footerBytes = encoder.encode(partFooter);
+
+  const body = new Uint8Array(
+    headerBytes.length + bytes.length + footerBytes.length,
+  );
+  body.set(headerBytes, 0);
+  body.set(bytes, headerBytes.length);
+  body.set(footerBytes, headerBytes.length + bytes.length);
+
+  return body.buffer;
+}
+
+/**
+ * Escape characters that would break a Content-Disposition header.
+ * Filenames are user-controlled (clipboard / picker), so we need this
+ * even though Obsidian usually picks tame names.
+ */
+function escapeFilename(name: string): string {
+  return name.replace(/[\r\n"\\]/g, (ch) => {
+    switch (ch) {
+      case "\r":
+        return "%0D";
+      case "\n":
+        return "%0A";
+      case '"':
+        return "%22";
+      case "\\":
+        return "%5C";
+      default:
+        return ch;
+    }
+  });
 }
 
 function guessMimeFromName(name: string): string {
