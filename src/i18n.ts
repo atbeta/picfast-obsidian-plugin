@@ -10,10 +10,10 @@
 export type Locale = "en" | "zh-CN";
 
 export const en = {
-  cmdUploadClipboard: "Upload image from clipboard to PicFast",
+  cmdUploadClipboard: "PicFast: Upload image from clipboard",
   cmdUploadClipboardRibbon: "Upload to PicFast",
-  cmdUploadFile: "Upload selected image file to PicFast",
-  cmdUploadAtCursor: "Upload image at cursor to PicFast",
+  cmdUploadFile: "PicFast: Upload selected image file",
+  cmdUploadAtCursor: "PicFast: Upload image at cursor",
   menuUpload: "Upload to PicFast",
   menuSaveLocal: "Save locally",
   menuCancel: "Cancel",
@@ -47,10 +47,10 @@ export const en = {
 };
 
 export const zhCN: typeof en = {
-  cmdUploadClipboard: "上传剪贴板图片到 PicFast",
+  cmdUploadClipboard: "PicFast: 从剪贴板上传图片",
   cmdUploadClipboardRibbon: "上传到 PicFast",
-  cmdUploadFile: "上传选中的图片文件到 PicFast",
-  cmdUploadAtCursor: "上传光标处的图片到 PicFast",
+  cmdUploadFile: "PicFast: 上传选中的图片文件",
+  cmdUploadAtCursor: "PicFast: 上传光标处的图片",
   menuUpload: "上传到 PicFast",
   menuSaveLocal: "保存到本地",
   menuCancel: "取消",

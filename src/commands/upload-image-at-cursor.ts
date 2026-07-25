@@ -79,7 +79,7 @@ export async function uploadImageAtCursor(
     // Build the replacement string. Prefer markdown form (works in both
     // preview and live mode) — Obsidian renders `![](url)` identically
     // to `![[image]]` for remote URLs.
-    const alt = match.alt ?? basenameNoExt(source.filename);
+    const alt = match.alt || basenameNoExt(source.filename);
     const replacement = `![${alt}](${result.url})`;
 
     editor.replaceRange(replacement, match.range.from, match.range.to);
