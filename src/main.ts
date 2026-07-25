@@ -22,7 +22,12 @@ import {
 
 import { autoPopulateSettings } from "./config-discovery";
 import { uploadFromClipboard } from "./commands/upload-from-clipboard";
+import { uploadImageAtCursor } from "./commands/upload-image-at-cursor";
 import { uploadSelectedFile } from "./commands/upload-selected-file";
+import {
+  findImageAtCursor,
+  isRemotePath,
+} from "./cursor-image";
 import { handleEditorImage } from "./editor-image-handler";
 import { initLocale, t } from "./i18n";
 import { PicFastSettingTab } from "./picfast-setting-tab";
@@ -89,11 +94,61 @@ export default class PicFastImageUploaderPlugin extends Plugin {
       },
     });
 
+    // Cursor-on-image-link command — only enabled when the cursor is
+    // sitting inside a markdown / wikilink image reference.
+    this.addCommand({
+      id: "upload-image-at-cursor",
+      name: t().cmdUploadAtCursor,
+      editorCheckCallback: (checking, editor, _ctx) => {
+        const match = findImageAtCursor(editor);
+        const enabled = match !== null && !isRemotePath(match.rawPath);
+        if (checking) return enabled;
+        if (!enabled || !match) return;
+        uploadImageAtCursor({
+          app: this.app,
+          editor,
+          match,
+          settings: this.settings,
+        }).catch((err) => {
+          // eslint-disable-next-line no-console
+          console.error("[PicFast] cursor upload failed:", err);
+        });
+      },
+    });
+
     // Document-level paste / drop interception. `useCapture=true` runs us
     // before Obsidian's default handler, which is what lets us replace the
     // "save into vault attachment" behaviour with "upload + insert link".
     this.registerDomEvent(document, "paste", this.onPasteCapture, true);
     this.registerDomEvent(document, "drop", this.onDropCapture, true);
+
+    // Right-click menu: add "Upload image at cursor to PicFast" when the
+    // cursor is over an image link that points at a local file.
+    this.registerEvent(
+      this.app.workspace.on(
+        "editor-menu",
+        (menu, editor, _view) => {
+          const match = findImageAtCursor(editor);
+          if (!match || isRemotePath(match.rawPath)) return;
+          menu.addItem((item) =>
+            item
+              .setTitle(t().cmdUploadAtCursor)
+              .setIcon("cloud-upload")
+              .onClick(() => {
+                uploadImageAtCursor({
+                  app: this.app,
+                  editor,
+                  match,
+                  settings: this.settings,
+                }).catch((err) => {
+                  // eslint-disable-next-line no-console
+                  console.error("[PicFast] cursor upload failed:", err);
+                });
+              }),
+          );
+        },
+      ),
+    );
 
     // Settings tab.
     this.addSettingTab(new PicFastSettingTab(this.app, this));

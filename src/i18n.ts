@@ -13,6 +13,7 @@ export const en = {
   cmdUploadClipboard: "Upload image from clipboard to PicFast",
   cmdUploadClipboardRibbon: "Upload to PicFast",
   cmdUploadFile: "Upload selected image file to PicFast",
+  cmdUploadAtCursor: "Upload image at cursor to PicFast",
   menuUpload: "Upload to PicFast",
   menuSaveLocal: "Save locally",
   menuCancel: "Cancel",
@@ -20,6 +21,10 @@ export const en = {
   noticeUploaded: "PicFast: uploaded ✓",
   noticeFailed: "PicFast upload failed: ",
   noticeMissingConfig: "PicFast: base URL not set. Open settings to configure.",
+  noticeAlreadyRemote:
+    "PicFast: this image is already a remote URL — skipping.",
+  noticeResolveFailed: "PicFast: could not resolve image path: ",
+  noticeReadFailed: "PicFast: failed to read image file: ",
   noticeAutoPopulated: (fields: string[]) =>
     `PicFast: auto-filled ${fields.join(", ")} from CLI config / env`,
   settingBaseUrl: "Base URL",
@@ -45,6 +50,7 @@ export const zhCN: typeof en = {
   cmdUploadClipboard: "上传剪贴板图片到 PicFast",
   cmdUploadClipboardRibbon: "上传到 PicFast",
   cmdUploadFile: "上传选中的图片文件到 PicFast",
+  cmdUploadAtCursor: "上传光标处的图片到 PicFast",
   menuUpload: "上传到 PicFast",
   menuSaveLocal: "保存到本地",
   menuCancel: "取消",
@@ -52,6 +58,9 @@ export const zhCN: typeof en = {
   noticeUploaded: "PicFast: 上传成功 ✓",
   noticeFailed: "PicFast 上传失败：",
   noticeMissingConfig: "PicFast: 未设置 base URL，请打开设置。",
+  noticeAlreadyRemote: "PicFast: 这张图已经是远程 URL，跳过。",
+  noticeResolveFailed: "PicFast: 无法解析图片路径：",
+  noticeReadFailed: "PicFast: 读取图片文件失败：",
   noticeAutoPopulated: (fields: string[]) =>
     `PicFast: 已从 CLI 配置 / 环境变量自动填充 ${fields.join(", ")}`,
   settingBaseUrl: "Base URL",
