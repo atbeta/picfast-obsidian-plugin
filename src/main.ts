@@ -3,10 +3,14 @@
  *
  * Lifecycle:
  *   onload:        load settings → auto-populate from CLI config → register
- *                  commands, ribbon icon, editor paste / drop handlers, and
- *                  the Settings tab.
+ *                  commands, ribbon icon, document-level paste / drop handlers,
+ *                  and the Settings tab.
  *   onunload:      Obsidian tears down registered events automatically;
  *                  no explicit cleanup needed.
+ *
+ * Paste / drop interception: we listen at document level with `useCapture=true`
+ * so we run *before* Obsidian's default handler, which would otherwise save
+ * the image into the vault's attachment folder.
  */
 
 import {
@@ -14,7 +18,6 @@ import {
   MarkdownView,
   Notice,
   Plugin,
-  Workspace,
 } from "obsidian";
 
 import { autoPopulateSettings } from "./config-discovery";
@@ -37,7 +40,7 @@ export class PicFastImageUploaderPlugin extends Plugin {
     initLocale();
     await this.loadAndPopulateSettings();
 
-    // Ribbon icon — same command as Cmd+Shift+V, for users who'd rather click.
+    // Ribbon icon — same command as Ctrl/Cmd+Shift+V, for users who'd rather click.
     this.addRibbonIcon(
       "cloud-upload",
       t().cmdUploadClipboardRibbon,
@@ -86,14 +89,63 @@ export class PicFastImageUploaderPlugin extends Plugin {
       },
     });
 
-    // Editor paste / drop handlers. These always run (we can't
-    // conditional-register on settings); the handler itself early-exits
-    // when behaviour is `off` or when the event carries no image.
-    this.registerEditorHandlers(this.app.workspace);
+    // Document-level paste / drop interception. `useCapture=true` runs us
+    // before Obsidian's default handler, which is what lets us replace the
+    // "save into vault attachment" behaviour with "upload + insert link".
+    this.registerDomEvent(document, "paste", this.onPasteCapture, true);
+    this.registerDomEvent(document, "drop", this.onDropCapture, true);
 
     // Settings tab.
     this.addSettingTab(new PicFastSettingTab(this.app, this));
   }
+
+  private onPasteCapture = (evt: ClipboardEvent): void => {
+    if (!evt.clipboardData) return;
+    // Only act when the paste lands inside a markdown editor.
+    if (!isInMarkdownEditor(evt.target)) return;
+    const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+    const editor = view?.editor;
+    if (!editor) return;
+
+    handleEditorImage({
+      app: this.app,
+      editor,
+      dataTransfer: evt.clipboardData,
+      settings: this.settings,
+      sourceLabel: "paste",
+    })
+      .then((consumed) => {
+        if (consumed) evt.preventDefault();
+      })
+      .catch((err) => {
+        // eslint-disable-next-line no-console
+        console.error("[PicFast] paste handler error:", err);
+      });
+  };
+
+  private onDropCapture = (evt: DragEvent): void => {
+    if (!evt.dataTransfer) return;
+    if (!isInMarkdownEditor(evt.target)) return;
+    const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+    const editor = view?.editor;
+    if (!editor) return;
+
+    handleEditorImage({
+      app: this.app,
+      editor,
+      dataTransfer: evt.dataTransfer,
+      settings: this.settings,
+      sourceLabel: "drop",
+      anchor: evt as unknown as MouseEvent,
+    })
+      .then((consumed) => {
+        if (consumed) evt.preventDefault();
+      })
+      .catch((err) => {
+        // eslint-disable-next-line no-console
+        console.error("[PicFast] drop handler error:", err);
+      });
+  };
 
   async loadAndPopulateSettings(): Promise<void> {
     const stored = await loadSettings(this);
@@ -108,54 +160,32 @@ export class PicFastImageUploaderPlugin extends Plugin {
   async persistSettings(): Promise<void> {
     await saveSettings(this, this.settings);
   }
+}
 
-  private registerEditorHandlers(workspace: Workspace): void {
-    this.registerEvent(
-      workspace.on(
-        "editor-paste",
-        (evt: ClipboardEvent, editor: Editor, _info: unknown) => {
-          if (!evt.clipboardData) return;
-          handleEditorImage({
-            app: this.app,
-            editor,
-            dataTransfer: evt.clipboardData,
-            settings: this.settings,
-            sourceLabel: "paste",
-          })
-            .then((consumed) => {
-              if (consumed) evt.preventDefault();
-            })
-            .catch((err) => {
-              // eslint-disable-next-line no-console
-              console.error("[PicFast] paste handler error:", err);
-            });
-        },
-      ),
-    );
-
-    this.registerEvent(
-      workspace.on(
-        "editor-drop",
-        (evt: DragEvent, editor: Editor, _info: unknown) => {
-          if (!evt.dataTransfer) return;
-          handleEditorImage({
-            app: this.app,
-            editor,
-            dataTransfer: evt.dataTransfer,
-            settings: this.settings,
-            sourceLabel: "drop",
-            anchor: evt as unknown as MouseEvent,
-          })
-            .then((consumed) => {
-              if (consumed) evt.preventDefault();
-            })
-            .catch((err) => {
-              // eslint-disable-next-line no-console
-              console.error("[PicFast] drop handler error:", err);
-            });
-        },
-      ),
-    );
+/**
+ * Returns true only when the paste / drop landed inside a CodeMirror
+ * editor owned by Obsidian — otherwise we'd intercept global paste
+ * events meant for the search box, settings dialog, etc.
+ */
+function isInMarkdownEditor(target: EventTarget | null): boolean {
+  if (!(target instanceof Node)) return false;
+  // CodeMirror v6 (Obsidian uses this since 1.0) attaches `cm-content`
+  // to its editable root. v5 used `CodeMirror`. We check both for safety.
+  let node: Node | null = target;
+  while (node) {
+    if (node instanceof HTMLElement) {
+      if (
+        node.classList.contains("cm-content") ||
+        node.classList.contains("CodeMirror")
+      ) {
+        return true;
+      }
+    }
+    node = node.parentNode;
   }
+  return false;
+}
 
-  }
+// Editor type is referenced transitively through handleEditorImage's opts,
+// which the bundler strips — keep this for type-checking clarity.
+export type { Editor };
