@@ -30,12 +30,11 @@ export const en = {
   settingBaseUrl: "Base URL",
   settingBaseUrlDesc:
     "Your PicFast instance root, e.g. https://picfast.example.com. " +
-    "Leave empty to auto-fill from the PICFAST_URL env var or " +
-    "~/.config/picfast/config.json (the `picfast` npm CLI config).",
+    "Leave empty to auto-fill from PICFAST_URL env var or `picfast` CLI config.",
   settingApiToken: "API token",
   settingApiTokenDesc:
     "Optional. Leave empty for anonymous uploads; set if your instance requires auth. " +
-    "Also auto-filled from PICFAST_TOKEN env or CLI config.",
+    "Auto-filled from PICFAST_TOKEN env or `picfast` CLI config.",
   settingApiTokenPlaceholder: "optional",
   settingUploadBehavior: "Upload behavior",
   settingUploadBehaviorDesc:
@@ -65,13 +64,12 @@ export const zhCN: typeof en = {
     `PicFast: 已从 CLI 配置 / 环境变量自动填充 ${fields.join(", ")}`,
   settingBaseUrl: "Base URL",
   settingBaseUrlDesc:
-    "你的 PicFast 实例地址，例如 https://picfast.example.com。 " +
-    "留空时自动从环境变量 PICFAST_URL 或 ~/.config/picfast/config.json " +
-    "（`picfast` npm CLI 的配置）读取。",
+    "你的 PicFast 实例地址，例如 https://picfast.example.com。" +
+    "留空时自动从 PICFAST_URL 环境变量或 `picfast` CLI 配置读取。",
   settingApiToken: "API token",
   settingApiTokenDesc:
-    "可选。匿名上传留空；如果你的实例需要鉴权则填写。 " +
-    "也会自动从 PICFAST_TOKEN 环境变量或 CLI 配置读取。",
+    "可选。匿名上传留空；如果你的实例需要鉴权则填写。" +
+    "自动从 PICFAST_TOKEN 环境变量或 `picfast` CLI 配置读取。",
   settingApiTokenPlaceholder: "可选",
   settingUploadBehavior: "上传行为",
   settingUploadBehaviorDesc:
