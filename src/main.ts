@@ -107,20 +107,17 @@ export default class PicFastImageUploaderPlugin extends Plugin {
     const editor = view?.editor;
     if (!editor) return;
 
+    // Note: handleEditorImage calls evt.preventDefault() synchronously
+    // when it decides to consume the event. We must NOT do it from a
+    // Promise callback — by then the event has already propagated.
     handleEditorImage({
       app: this.app,
       editor,
       dataTransfer: evt.clipboardData,
       settings: this.settings,
       sourceLabel: "paste",
-    })
-      .then((consumed) => {
-        if (consumed) evt.preventDefault();
-      })
-      .catch((err) => {
-        // eslint-disable-next-line no-console
-        console.error("[PicFast] paste handler error:", err);
-      });
+      event: evt,
+    });
   };
 
   private onDropCapture = (evt: DragEvent): void => {
@@ -137,14 +134,8 @@ export default class PicFastImageUploaderPlugin extends Plugin {
       settings: this.settings,
       sourceLabel: "drop",
       anchor: evt as unknown as MouseEvent,
-    })
-      .then((consumed) => {
-        if (consumed) evt.preventDefault();
-      })
-      .catch((err) => {
-        // eslint-disable-next-line no-console
-        console.error("[PicFast] drop handler error:", err);
-      });
+      event: evt,
+    });
   };
 
   async loadAndPopulateSettings(): Promise<void> {

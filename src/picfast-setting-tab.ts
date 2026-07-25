@@ -2,6 +2,9 @@
  * Settings tab — exposes the three user-visible options in Obsidian's
  * Settings dialog. Each control writes back to the plugin's settings
  * and persists via persistSettings().
+ *
+ * All visible labels come from the i18n module — including dropdown
+ * option text and placeholders.
  */
 
 import { App, PluginSettingTab, Setting } from "obsidian";
@@ -22,9 +25,11 @@ export class PicFastSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
+    const labels = t();
+
     new Setting(containerEl)
-      .setName(t().settingBaseUrl)
-      .setDesc(t().settingBaseUrlDesc)
+      .setName(labels.settingBaseUrl)
+      .setDesc(labels.settingBaseUrlDesc)
       .addText((text) =>
         text
           .setPlaceholder("https://picfast.example.com")
@@ -36,11 +41,11 @@ export class PicFastSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName(t().settingApiToken)
-      .setDesc(t().settingApiTokenDesc)
+      .setName(labels.settingApiToken)
+      .setDesc(labels.settingApiTokenDesc)
       .addText((text) => {
         text
-          .setPlaceholder("optional")
+          .setPlaceholder(labels.settingApiTokenPlaceholder)
           .setValue(this.plugin.settings.apiToken)
           .onChange(async (value) => {
             this.plugin.settings.apiToken = value.trim();
@@ -50,13 +55,13 @@ export class PicFastSettingTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName(t().settingUploadBehavior)
-      .setDesc(t().settingUploadBehaviorDesc)
+      .setName(labels.settingUploadBehavior)
+      .setDesc(labels.settingUploadBehaviorDesc)
       .addDropdown((dropdown) =>
         dropdown
-          .addOption("off", "Off (Obsidian default)")
-          .addOption("ask", "Ask each time (recommended)")
-          .addOption("on", "Always upload")
+          .addOption("off", labels.settingUploadBehaviorOptionOff)
+          .addOption("ask", labels.settingUploadBehaviorOptionAsk)
+          .addOption("on", labels.settingUploadBehaviorOptionOn)
           .setValue(this.plugin.settings.uploadBehavior)
           .onChange(async (value) => {
             this.plugin.settings.uploadBehavior = value as UploadBehavior;

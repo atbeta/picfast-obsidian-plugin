@@ -31,10 +31,14 @@ export const en = {
   settingApiTokenDesc:
     "Optional. Leave empty for anonymous uploads; set if your instance requires auth. " +
     "Also auto-filled from PICFAST_TOKEN env or CLI config.",
+  settingApiTokenPlaceholder: "optional",
   settingUploadBehavior: "Upload behavior",
   settingUploadBehaviorDesc:
     "What happens when you paste or drop an image in the editor. " +
     "'Ask' shows a small menu so you can choose each time.",
+  settingUploadBehaviorOptionOff: "Off (Obsidian default)",
+  settingUploadBehaviorOptionAsk: "Ask each time (recommended)",
+  settingUploadBehaviorOptionOn: "Always upload",
 };
 
 export const zhCN: typeof en = {
@@ -59,9 +63,13 @@ export const zhCN: typeof en = {
   settingApiTokenDesc:
     "可选。匿名上传留空；如果你的实例需要鉴权则填写。 " +
     "也会自动从 PICFAST_TOKEN 环境变量或 CLI 配置读取。",
+  settingApiTokenPlaceholder: "可选",
   settingUploadBehavior: "上传行为",
   settingUploadBehaviorDesc:
     "粘贴或拖入图片时的默认行为。Ask 会弹一个 1-click 小菜单让你选择。",
+  settingUploadBehaviorOptionOff: "Off（使用 Obsidian 默认行为）",
+  settingUploadBehaviorOptionAsk: "每次询问（推荐）",
+  settingUploadBehaviorOptionOn: "总是上传",
 };
 
 const MESSAGES: Record<Locale, typeof en> = {

@@ -1,12 +1,21 @@
 /**
  * Shared editor-image handler used by both the drop event and the
- * paste event. Identifies image entries in a DataTransfer and decides
- * whether to upload (always / ask / never) based on user settings.
+ * paste event.
  *
- * Returns `true` when the handler has fully consumed the event so the
- * caller knows it can `preventDefault()` and bail without re-inserting
- * anything (Obsidian's default behaviour is to save the image into the
- * vault's attachment folder, which we want to suppress in `on` mode).
+ * IMPORTANT: `event.preventDefault()` and `event.stopPropagation()` must
+ * be called **synchronously** inside the capture-phase listener. By the
+ * time an `.then()` callback runs, the event has already finished
+ * propagating and Obsidian's default handler has already inserted its
+ * `![[attachment.png]]` — preventing default at that point is a no-op,
+ * and you end up with two copies in the editor.
+ *
+ * So the rule is:
+ *   - If we know synchronously that we'll handle the image
+ *     (uploadBehavior !== off, image present), preventDefault immediately.
+ *   - The actual upload is still async.
+ *   - If the user picks "Save locally" from the ask menu, we emulate
+ *     Obsidian's default behaviour ourselves (vault.createBinary + insert
+ *     `![[name]]`) because we've already swallowed the event.
  */
 
 import { App, Editor, Menu } from "obsidian";
@@ -22,6 +31,8 @@ export interface EditorImageHandlerOpts {
   settings: PicFastSettings;
   /** Source name for diagnostics and for the ask menu. */
   sourceLabel: "drop" | "paste";
+  /** Original DOM event — needed to call preventDefault synchronously. */
+  event: Event;
   /**
    * Mouse event used to position the ask menu. Optional; when omitted
    * (e.g. for paste, which has no mouse position) the menu anchors at
@@ -30,21 +41,32 @@ export interface EditorImageHandlerOpts {
   anchor?: MouseEvent;
 }
 
-export async function handleEditorImage(
+/**
+ * Must be called from a capture-phase DOM listener. Decides
+ * synchronously whether to consume the event, then runs the upload
+ * (sync or after a user choice).
+ */
+export function handleEditorImage(
   opts: EditorImageHandlerOpts,
-): Promise<boolean> {
+): void {
   const image = pickFirstImage(opts.dataTransfer);
-  if (!image) return false;
+  if (!image) return; // not an image — let Obsidian handle normally
 
   const behavior = opts.settings.uploadBehavior;
-  if (behavior === "off") return false;
+  if (behavior === "off") return; // user opted out — let Obsidian handle
 
-  if (behavior === "ask") {
-    return askAndUpload(opts, image);
+  // Synchronously swallow the event so Obsidian's default handler does
+  // not insert its `![[attachment.png]]` link.
+  opts.event.preventDefault();
+  opts.event.stopPropagation();
+
+  if (behavior === "on") {
+    void uploadFromDataTransfer(opts, image);
+    return;
   }
-  // behavior === "on"
-  await uploadFromDataTransfer(opts, image);
-  return true;
+
+  // behavior === "ask"
+  void askAndHandle(opts, image);
 }
 
 interface PickedImage {
@@ -70,18 +92,11 @@ function pickFirstImage(dt: DataTransfer): PickedImage | null {
   return null;
 }
 
-async function askAndUpload(
+async function askAndHandle(
   opts: EditorImageHandlerOpts,
   image: PickedImage,
-): Promise<boolean> {
-  return new Promise<boolean>((resolve) => {
-    let settled = false;
-    const settle = (value: boolean) => {
-      if (settled) return;
-      settled = true;
-      resolve(value);
-    };
-
+): Promise<void> {
+  return new Promise<void>((resolve) => {
     const menu = new Menu();
 
     menu.addItem((item) =>
@@ -89,7 +104,7 @@ async function askAndUpload(
         .setTitle(t().menuUpload)
         .setIcon("cloud-upload")
         .onClick(async () => {
-          settle(true); // consumed
+          resolve();
           try {
             await uploadFromDataTransfer(opts, image);
           } catch {
@@ -102,8 +117,14 @@ async function askAndUpload(
       item
         .setTitle(t().menuSaveLocal)
         .setIcon("save")
-        .onClick(() => {
-          settle(false); // tell caller to let Obsidian default behaviour run
+        .onClick(async () => {
+          resolve();
+          try {
+            await saveLocal(opts, image);
+          } catch (err) {
+            // eslint-disable-next-line no-console
+            console.error("[PicFast] save-local failed:", err);
+          }
         }),
     );
 
@@ -112,15 +133,9 @@ async function askAndUpload(
         .setTitle(t().menuCancel)
         .setIcon("x")
         .onClick(() => {
-          settle(true); // consumed: don't fall back to default save
+          resolve();
         }),
     );
-
-    // Treat menu dismissal (Esc / click-away) as cancel.
-    // (Obsidian Menu doesn't expose a hide event in its typings, so we
-    // approximate by treating a no-selection within a generous timeout as
-    // a dismissal — settled=true at that point becomes a no-op.)
-    const dismissTimer = window.setTimeout(() => settle(true), 60_000);
 
     if (opts.anchor) {
       menu.showAtMouseEvent(opts.anchor);
@@ -143,13 +158,34 @@ async function askAndUpload(
       menu.showAtMouseEvent(fakeEvent);
     }
 
-    // Best-effort: when the menu closes (callback returned or Esc pressed),
-    // clear the dismiss timer. Menu doesn't expose its lifecycle directly,
-    // so we rely on the per-item callbacks having already settled.
-    void dismissTimer;
-
     void opts.sourceLabel;
   });
+}
+
+/**
+ * Emulate Obsidian's default behaviour: save the image as an attachment
+ * in the vault and insert `![[name]]`. We need this because we already
+ * synchronously swallowed the original paste / drop event above.
+ */
+async function saveLocal(
+  opts: EditorImageHandlerOpts,
+  image: PickedImage,
+): Promise<void> {
+  const buffer = await image.file.arrayBuffer();
+  const filename = sanitizeFilename(image.file.name || `image.${image.ext}`);
+
+  const activeFile = opts.app.workspace.getActiveFile();
+  const targetPath = await opts.app.fileManager.getAvailablePathForAttachment(
+    filename,
+    activeFile?.path,
+  );
+  const created = await opts.app.vault.createBinary(
+    targetPath,
+    buffer,
+  );
+  // Use the basename (not the full vault-relative path) so the link
+  // resolves correctly from any note that embeds it.
+  opts.editor.replaceSelection(`![[${created.name}]]`);
 }
 
 async function uploadFromDataTransfer(
@@ -168,6 +204,16 @@ async function uploadFromDataTransfer(
     settings: opts.settings,
     editor: opts.editor,
   });
+}
+
+function sanitizeFilename(name: string): string {
+  // Obsidian's file manager will rewrite invalid names anyway, but
+  // strip path separators up front to avoid surprises.
+  const cleaned = name
+    .replace(/[\\/]/g, "_")
+    .replace(/^\.+/, "")
+    .trim();
+  return cleaned.length > 0 ? cleaned : `image-${Date.now()}.png`;
 }
 
 function extensionFromMime(mime: string): string {
