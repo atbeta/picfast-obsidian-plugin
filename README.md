@@ -24,22 +24,13 @@ PDF and other non-image drops are intentionally ignored — PicFast is an image 
 
 ## Install
 
-### From Community Plugins (when approved)
+Distribution is via [BRAT](https://github.com/TfTHacker/obsidian42-brat) — the plugin is not currently listed in the Obsidian Community Plugins marketplace.
 
-Settings → Community plugins → Browse → search "PicFast Image Uploader" → Install → Enable.
-
-### BRAT (internal / pre-release)
-
-1. Install [BRAT](https://github.com/TfTHacker/obsidian42-brat) from Community plugins.
-2. BRAT settings → "Add Beta plugin" → paste `atbeta/picfast-obsidian-plugin`.
+1. Install BRAT from Community plugins.
+2. BRAT settings → "Add Beta plugin" → paste `atbeta/picfast-obsidian-plugin` (use `atbeta/picfast-obsidian-plugin#v0.3.0` to pin a specific release).
 3. Enable PicFast Image Uploader in Community plugins.
 
-### Manual
-
-1. Download `main.js`, `manifest.json`, `styles.css` from the [latest release](https://github.com/atbeta/picfast-obsidian-plugin/releases).
-2. Create `.obsidian/plugins/picfast-image-uploader/` inside your vault.
-3. Drop the three files into that folder.
-4. Settings → Community plugins → enable PicFast Image Uploader.
+For manual installation, download `main.js`, `manifest.json`, `styles.css` from the [latest release](https://github.com/atbeta/picfast-obsidian-plugin/releases), drop them into `.obsidian/plugins/picfast-image-uploader/` inside your vault, then enable the plugin under Community plugins.
 
 ## Configuration
 
