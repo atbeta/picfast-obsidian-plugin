@@ -1,5 +1,7 @@
 # PicFast Image Uploader
 
+[![CI](https://github.com/atbeta/picfast-obsidian-plugin/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/atbeta/picfast-obsidian-plugin/actions/workflows/ci.yml)
+
 Obsidian plugin that uploads pasted or dropped images to your [PicFast](https://github.com/atbeta/picfast) instance — **no PicGo middleman, no extra config**.
 
 ![Demo](docs/demo.png)
