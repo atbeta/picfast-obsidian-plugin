@@ -7,7 +7,7 @@
  * option text and placeholders.
  */
 
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 
 import { t } from "./i18n";
 import { placeholderPattern, RenameScope, UploadBehavior } from "./settings";
@@ -105,6 +105,23 @@ export class PicFastSettingTab extends PluginSettingTab {
           .onChange(async (value) => {
             this.plugin.settings.localMirror = value;
             await this.plugin.persistSettings();
+          }),
+      );
+
+    new Setting(containerEl)
+      .setName(labels.settingShowRibbonIcon)
+      .setDesc(labels.settingShowRibbonIconDesc)
+      .addToggle((toggle) =>
+        toggle
+          .setValue(this.plugin.settings.showRibbonIcon)
+          .onChange(async (value) => {
+            if (value !== this.plugin.settings.showRibbonIcon) {
+              this.plugin.settings.showRibbonIcon = value;
+              await this.plugin.persistSettings();
+              // Obsidian does not expose a removeRibbonIcon API, so the
+              // new state only takes effect when the plugin is reloaded.
+              new Notice(t().noticeReloadPlugin);
+            }
           }),
       );
   }

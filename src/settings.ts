@@ -44,6 +44,12 @@ export interface PicFastSettings {
    * host going away). Off by default.
    */
   localMirror: boolean;
+  /**
+   * Show the ribbon icon in the left sidebar. Obsidian has no
+   * `removeRibbonIcon` API, so toggling this only takes effect on the
+   * next plugin reload (the settings tab surfaces a notice).
+   */
+  showRibbonIcon: boolean;
 }
 
 export const DEFAULT_SETTINGS: PicFastSettings = {
@@ -53,6 +59,7 @@ export const DEFAULT_SETTINGS: PicFastSettings = {
   namePattern: "",
   renameScope: "paste",
   localMirror: false,
+  showRibbonIcon: true,
 };
 
 export async function loadSettings(
@@ -66,6 +73,7 @@ export async function loadSettings(
     namePattern: (raw.namePattern ?? "").toString().trim(),
     renameScope: raw.renameScope === "all" ? "all" : "paste",
     localMirror: raw.localMirror === true,
+    showRibbonIcon: raw.showRibbonIcon !== false,
   };
 }
 

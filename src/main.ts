@@ -46,24 +46,30 @@ export default class PicFastImageUploaderPlugin extends Plugin {
     await this.loadAndPopulateSettings();
 
     // Ribbon icon — same command as Ctrl/Cmd+Shift+V, for users who'd rather click.
-    this.addRibbonIcon(
-      "cloud-upload",
-      t().cmdUploadClipboardRibbon,
-      () => {
-        const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-        const editor = view?.editor;
-        if (!editor) {
-          new Notice("PicFast: no active editor.");
-          return;
-        }
-        uploadFromClipboard({ app: this.app, editor, settings: this.settings }).catch(
-          (err) => {
+    // Obsidian does not expose a removeRibbonIcon API, so toggling
+    // settings.showRibbonIcon only takes effect on the next plugin reload.
+    if (this.settings.showRibbonIcon) {
+      this.addRibbonIcon(
+        "cloud-upload",
+        t().cmdUploadClipboardRibbon,
+        () => {
+          const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+          const editor = view?.editor;
+          if (!editor) {
+            new Notice("PicFast: no active editor.");
+            return;
+          }
+          uploadFromClipboard({
+            app: this.app,
+            editor,
+            settings: this.settings,
+          }).catch((err) => {
             // eslint-disable-next-line no-console
             console.error("[PicFast] clipboard upload failed:", err);
-          },
-        );
-      },
-    );
+          });
+        },
+      );
+    }
 
     // Commands.
     this.addCommand({

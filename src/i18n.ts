@@ -31,6 +31,8 @@ export const en = {
   noticeFallbackSaved:
     "PicFast: upload failed — image saved locally instead: ",
   noticeOpenImage: "Click to open the image",
+  noticeReloadPlugin:
+    "PicFast: reload the plugin (toggle it off then on in Settings → Community plugins) for this change to take effect.",
   settingBaseUrl: "Base URL",
   settingBaseUrlDesc:
     "Your PicFast instance root, e.g. https://picfast.example.com. " +
@@ -66,6 +68,11 @@ export const en = {
     "the note, as insurance if the image host becomes unavailable. " +
     "If an upload fails, the image is saved locally instead so the paste " +
     "still works.",
+  settingShowRibbonIcon: "Ribbon icon",
+  settingShowRibbonIconDesc:
+    "Show the cloud-upload icon in Obsidian's left ribbon. Off hides it " +
+    "on next plugin reload (Obsidian has no removeRibbonIcon API). The " +
+    "command palette entry still works either way.",
 };
 
 export const zhCN: typeof en = {
@@ -89,6 +96,8 @@ export const zhCN: typeof en = {
   noticeMirrorFailed: "PicFast: 本地副本保存失败（不影响上传）：",
   noticeFallbackSaved: "PicFast: 上传失败，已改为保存到本地：",
   noticeOpenImage: "点击打开图片",
+  noticeReloadPlugin:
+    "PicFast：需重载插件（在设置 → 第三方插件里关闭再打开）后此改动才生效。",
   settingBaseUrl: "Base URL",
   settingBaseUrlDesc:
     "你的 PicFast 实例地址，例如 https://picfast.example.com。" +
@@ -121,6 +130,10 @@ export const zhCN: typeof en = {
   settingLocalMirrorDesc:
     "在笔记同目录的「文档名.assets/」里为每张成功上传的图片保留一份副本，" +
     "图床失效时仍有图可用。上传失败时也会自动保存到本地，粘贴不落空。",
+  settingShowRibbonIcon: "侧边栏图标",
+  settingShowRibbonIconDesc:
+    "在 Obsidian 左侧 ribbon 显示「云上传」图标。关闭后下次重载插件生效" +
+    "（Obsidian 没有公开的 removeRibbonIcon）。命令面板的入口依然可用。",
 };
 
 const MESSAGES: Record<Locale, typeof en> = {
