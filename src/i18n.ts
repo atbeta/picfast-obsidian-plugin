@@ -66,8 +66,6 @@ export const en = {
     "the note, as insurance if the image host becomes unavailable. " +
     "If an upload fails, the image is saved locally instead so the paste " +
     "still works.",
-  settingLocalMirrorToggleOn: "On",
-  settingLocalMirrorToggleOff: "Off",
 };
 
 export const zhCN: typeof en = {
@@ -123,8 +121,6 @@ export const zhCN: typeof en = {
   settingLocalMirrorDesc:
     "在笔记同目录的「文档名.assets/」里为每张成功上传的图片保留一份副本，" +
     "图床失效时仍有图可用。上传失败时也会自动保存到本地，粘贴不落空。",
-  settingLocalMirrorToggleOn: "开启",
-  settingLocalMirrorToggleOff: "关闭",
 };
 
 const MESSAGES: Record<Locale, typeof en> = {
