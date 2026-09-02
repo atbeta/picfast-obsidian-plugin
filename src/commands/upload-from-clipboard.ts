@@ -7,6 +7,7 @@
 
 import { App, Editor, Notice } from "obsidian";
 
+import { readImageNameKey } from "../frontmatter";
 import { PicFastSettings } from "../settings";
 import { performUpload } from "../upload-flow";
 
@@ -65,22 +66,6 @@ export async function uploadFromClipboard(
     allowRename: true,
     imageNameKey: readImageNameKey(opts.app),
   });
-}
-
-/**
- * Read `imageNameKey` from the active note's frontmatter (used by the
- * filename template). Returns "" when absent or unreadable.
- */
-function readImageNameKey(app: App): string {
-  try {
-    const file = app.workspace.getActiveFile();
-    if (!file) return "";
-    const meta = app.metadataCache.getFileCache(file);
-    const value = meta?.frontmatter?.["imageNameKey"];
-    return typeof value === "string" ? value.trim() : "";
-  } catch {
-    return "";
-  }
 }
 
 function extensionFromMime(mime: string): string {

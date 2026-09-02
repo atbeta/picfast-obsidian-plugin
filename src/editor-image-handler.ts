@@ -20,6 +20,7 @@
 
 import { App, Editor, Menu } from "obsidian";
 
+import { readImageNameKey } from "./frontmatter";
 import { t } from "./i18n";
 import { PicFastSettings } from "./settings";
 import { performUpload } from "./upload-flow";
@@ -203,32 +204,22 @@ async function uploadFromDataTransfer(
   const isPaste = opts.sourceLabel === "paste";
   const allowRename = isPaste || opts.settings.renameScope === "all";
 
+  // Cache getActiveFile once — used for both `activeFile` (mirror dir +
+  // dedupe key) and the filename-template's frontmatter lookup, and the
+  // workspace can technically switch between calls if the event handler
+  // races with a tab change.
+  const activeFile = opts.app.workspace.getActiveFile();
+
   await performUpload({
     app: opts.app,
     data: buf,
     filename,
     settings: opts.settings,
     editor: opts.editor,
-    activeFile: opts.app.workspace.getActiveFile(),
+    activeFile,
     allowRename,
     imageNameKey: readImageNameKey(opts.app),
   });
-}
-
-/**
- * Read `imageNameKey` from the active note's frontmatter (used by the
- * filename template). Returns "" when absent or unreadable.
- */
-function readImageNameKey(app: App): string {
-  try {
-    const file = app.workspace.getActiveFile();
-    if (!file) return "";
-    const meta = app.metadataCache.getFileCache(file);
-    const value = meta?.frontmatter?.["imageNameKey"];
-    return typeof value === "string" ? value.trim() : "";
-  } catch {
-    return "";
-  }
 }
 
 function sanitizeFilename(name: string): string {
