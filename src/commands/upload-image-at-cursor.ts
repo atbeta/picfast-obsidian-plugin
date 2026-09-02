@@ -47,14 +47,29 @@ export async function uploadImageAtCursor(
     return;
   }
 
-  // Resolve → read → upload → replace.
+  // Resolve → read → upload → replace. `activeFile` lets the resolver
+  // find files inside `<note>.assets/` (local-mirror + attachment-in-
+  // subfolder mode) so a perfectly valid local copy isn't reported as
+  // missing.
   let source;
   try {
-    source = await resolveImageSource(app, match.rawPath);
-  } catch (err) {
-    new Notice(
-      t().noticeResolveFailed + (err instanceof Error ? err.message : String(err)),
+    source = await resolveImageSource(
+      app,
+      match.rawPath,
+      app.workspace.getActiveFile(),
     );
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    // When the file is simply not in the vault, surface the "already
+    // remote" notice — the most likely cause is a path-only link that
+    // is actually hosted elsewhere (or that the user deleted the local
+    // copy of). The raw error already lists every path we tried, so
+    // this is just a clearer signal than "could not locate".
+    if (msg.startsWith("Could not locate image in vault")) {
+      new Notice(t().noticeAlreadyRemote);
+      return;
+    }
+    new Notice(t().noticeResolveFailed + msg);
     return;
   }
 
