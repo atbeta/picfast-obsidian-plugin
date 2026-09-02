@@ -198,12 +198,37 @@ async function uploadFromDataTransfer(
       ? image.file.name
       : `picfast-${opts.sourceLabel}-${Date.now()}.${image.ext}`;
 
+  // Template renaming: paste always qualifies; drop only when the
+  // rename scope covers dragged files too.
+  const isPaste = opts.sourceLabel === "paste";
+  const allowRename = isPaste || opts.settings.renameScope === "all";
+
   await performUpload({
+    app: opts.app,
     data: buf,
     filename,
     settings: opts.settings,
     editor: opts.editor,
+    activeFile: opts.app.workspace.getActiveFile(),
+    allowRename,
+    imageNameKey: readImageNameKey(opts.app),
   });
+}
+
+/**
+ * Read `imageNameKey` from the active note's frontmatter (used by the
+ * filename template). Returns "" when absent or unreadable.
+ */
+function readImageNameKey(app: App): string {
+  try {
+    const file = app.workspace.getActiveFile();
+    if (!file) return "";
+    const meta = app.metadataCache.getFileCache(file);
+    const value = meta?.frontmatter?.["imageNameKey"];
+    return typeof value === "string" ? value.trim() : "";
+  } catch {
+    return "";
+  }
 }
 
 function sanitizeFilename(name: string): string {

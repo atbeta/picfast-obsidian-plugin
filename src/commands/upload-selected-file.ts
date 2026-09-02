@@ -5,12 +5,13 @@
  * already saved in the vault's attachment folder) without copy/paste.
  */
 
-import { Editor, Notice } from "obsidian";
+import { App, Editor, Notice } from "obsidian";
 
 import { PicFastSettings } from "../settings";
 import { performUpload } from "../upload-flow";
 
 export interface UploadSelectedFileOpts {
+  app: App;
   editor: Editor;
   settings: PicFastSettings;
 }
@@ -55,9 +56,11 @@ export async function uploadSelectedFile(
 
   const buffer = await file.arrayBuffer();
   await performUpload({
+    app: opts.app,
     data: buffer,
     filename: file.name,
     settings: opts.settings,
     editor: opts.editor,
+    activeFile: opts.app.workspace.getActiveFile(),
   });
 }

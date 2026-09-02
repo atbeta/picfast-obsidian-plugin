@@ -127,14 +127,6 @@ function matchWikilink(line: string): Hit[] {
 }
 
 /**
- * Cheap pre-check that doesn't depend on Obsidian's Editor — used by
- * `editorCheckCallback` so the command can hide itself when irrelevant.
- */
-export function lineContainsImage(line: string): boolean {
-  return /!\[/.test(line);
-}
-
-/**
  * Decide whether the given raw path is something we should treat as
  * "already remote" (skip — nothing to upload).
  */

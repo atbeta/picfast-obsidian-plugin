@@ -1,13 +1,13 @@
 /**
  * Plugin settings — types, defaults, load/save helpers.
  *
- * Only the four (now three) user-visible fields live here. The upload
- * path is hard-coded to /api/v1/flat/upload and the insert format is
- * always markdown — Obsidian is a markdown editor, no one picks "html"
- * or "bbcode" here.
+ * The upload path is hard-coded to /api/v1/flat/upload and the insert
+ * format is always markdown — Obsidian is a markdown editor.
  */
 
 import { Plugin } from "obsidian";
+
+import { DEFAULT_NAME_PATTERN } from "./name-template";
 
 export const CONFIG_SECTION = "picfast";
 export const UPLOAD_PATH = "/api/v1/flat/upload";
@@ -20,18 +20,39 @@ export const UPLOAD_PATH = "/api/v1/flat/upload";
  */
 export type UploadBehavior = "off" | "ask" | "on";
 
+/**
+ * Which sources the filename template applies to. Dragged files usually
+ * carry a meaningful name; pasted screenshots never do — so "paste" is
+ * the default.
+ */
+export type RenameScope = "paste" | "all";
+
 export interface PicFastSettings {
   baseUrl: string;
   apiToken: string;
   uploadBehavior: UploadBehavior;
-  timeoutMs: number;
+  /**
+   * Filename template for renamed uploads. Empty string = keep the
+   * original filename (zero-config default). See name-template.ts for
+   * the supported tokens.
+   */
+  namePattern: string;
+  renameScope: RenameScope;
+  /**
+   * Keep a local copy of every successfully uploaded image in
+   * `<note>.assets/` next to the note (insurance against the image
+   * host going away). Off by default.
+   */
+  localMirror: boolean;
 }
 
 export const DEFAULT_SETTINGS: PicFastSettings = {
   baseUrl: "",
   apiToken: "",
   uploadBehavior: "ask",
-  timeoutMs: 30000,
+  namePattern: "",
+  renameScope: "paste",
+  localMirror: false,
 };
 
 export async function loadSettings(
@@ -42,7 +63,9 @@ export async function loadSettings(
     baseUrl: (raw.baseUrl ?? "").toString().trim(),
     apiToken: (raw.apiToken ?? "").toString().trim(),
     uploadBehavior: normalizeBehavior(raw.uploadBehavior),
-    timeoutMs: clampInt(raw.timeoutMs, 5000, 120000, 30000),
+    namePattern: (raw.namePattern ?? "").toString().trim(),
+    renameScope: raw.renameScope === "all" ? "all" : "paste",
+    localMirror: raw.localMirror === true,
   };
 }
 
@@ -61,17 +84,11 @@ export function stripTrailingSlash(s: string): string {
   return s.replace(/\/+$/, "");
 }
 
-function normalizeBehavior(v: unknown): UploadBehavior {
-  return v === "off" || v === "on" || v === "ask" ? v : "ask";
+/** The pattern shown as the settings placeholder (not auto-applied). */
+export function placeholderPattern(): string {
+  return DEFAULT_NAME_PATTERN;
 }
 
-function clampInt(
-  v: unknown,
-  min: number,
-  max: number,
-  fallback: number,
-): number {
-  const n = typeof v === "number" ? Math.round(v) : Number(v);
-  if (!Number.isFinite(n)) return fallback;
-  return Math.min(max, Math.max(min, n));
+function normalizeBehavior(v: unknown): UploadBehavior {
+  return v === "off" || v === "on" || v === "ask" ? v : "ask";
 }

@@ -70,10 +70,12 @@ export async function uploadImageAtCursor(
 
   try {
     const result = await performUpload({
+      app,
       data: buffer,
       filename: source.filename,
       settings,
       editor: dummyEditor(editor),
+      activeFile: app.workspace.getActiveFile(),
     });
 
     // Build the replacement string. Prefer markdown form (works in both

@@ -1,7 +1,7 @@
 /**
- * Settings tab — exposes the three user-visible options in Obsidian's
- * Settings dialog. Each control writes back to the plugin's settings
- * and persists via persistSettings().
+ * Settings tab — exposes the plugin options in Obsidian's Settings
+ * dialog. Each control writes back to the plugin's settings and
+ * persists via persistSettings().
  *
  * All visible labels come from the i18n module — including dropdown
  * option text and placeholders.
@@ -10,7 +10,7 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 
 import { t } from "./i18n";
-import { UploadBehavior } from "./settings";
+import { placeholderPattern, RenameScope, UploadBehavior } from "./settings";
 import PicFastImageUploaderPlugin from "./main";
 
 export class PicFastSettingTab extends PluginSettingTab {
@@ -65,6 +65,45 @@ export class PicFastSettingTab extends PluginSettingTab {
           .setValue(this.plugin.settings.uploadBehavior)
           .onChange(async (value) => {
             this.plugin.settings.uploadBehavior = value as UploadBehavior;
+            await this.plugin.persistSettings();
+          }),
+      );
+
+    new Setting(containerEl)
+      .setName(labels.settingNamePattern)
+      .setDesc(labels.settingNamePatternDesc)
+      .addText((text) =>
+        text
+          .setPlaceholder(placeholderPattern())
+          .setValue(this.plugin.settings.namePattern)
+          .onChange(async (value) => {
+            this.plugin.settings.namePattern = value.trim();
+            await this.plugin.persistSettings();
+          }),
+      );
+
+    new Setting(containerEl)
+      .setName(labels.settingRenameScope)
+      .setDesc(labels.settingRenameScopeDesc)
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOption("paste", labels.settingRenameScopeOptionPaste)
+          .addOption("all", labels.settingRenameScopeOptionAll)
+          .setValue(this.plugin.settings.renameScope)
+          .onChange(async (value) => {
+            this.plugin.settings.renameScope = value as RenameScope;
+            await this.plugin.persistSettings();
+          }),
+      );
+
+    new Setting(containerEl)
+      .setName(labels.settingLocalMirror)
+      .setDesc(labels.settingLocalMirrorDesc)
+      .addToggle((toggle) =>
+        toggle
+          .setValue(this.plugin.settings.localMirror)
+          .onChange(async (value) => {
+            this.plugin.settings.localMirror = value;
             await this.plugin.persistSettings();
           }),
       );

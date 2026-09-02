@@ -56,7 +56,7 @@ export default class PicFastImageUploaderPlugin extends Plugin {
           new Notice("PicFast: no active editor.");
           return;
         }
-        uploadFromClipboard({ editor, settings: this.settings }).catch(
+        uploadFromClipboard({ app: this.app, editor, settings: this.settings }).catch(
           (err) => {
             // eslint-disable-next-line no-console
             console.error("[PicFast] clipboard upload failed:", err);
@@ -71,7 +71,7 @@ export default class PicFastImageUploaderPlugin extends Plugin {
       name: t().cmdUploadClipboard,
       editorCheckCallback: (checking, editor, _ctx) => {
         if (checking) return true;
-        uploadFromClipboard({ editor, settings: this.settings }).catch(
+        uploadFromClipboard({ app: this.app, editor, settings: this.settings }).catch(
           (err) => {
             // eslint-disable-next-line no-console
             console.error("[PicFast] clipboard upload failed:", err);
@@ -85,7 +85,7 @@ export default class PicFastImageUploaderPlugin extends Plugin {
       name: t().cmdUploadFile,
       editorCheckCallback: (checking, editor, _ctx) => {
         if (checking) return true;
-        uploadSelectedFile({ editor, settings: this.settings }).catch(
+        uploadSelectedFile({ app: this.app, editor, settings: this.settings }).catch(
           (err) => {
             // eslint-disable-next-line no-console
             console.error("[PicFast] selected-file upload failed:", err);

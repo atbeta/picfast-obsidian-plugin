@@ -5,12 +5,13 @@
  * has no image, show a Notice and bail.
  */
 
-import { Editor, Notice } from "obsidian";
+import { App, Editor, Notice } from "obsidian";
 
 import { PicFastSettings } from "../settings";
 import { performUpload } from "../upload-flow";
 
 export interface UploadFromClipboardOpts {
+  app: App;
   editor: Editor;
   settings: PicFastSettings;
 }
@@ -55,11 +56,31 @@ export async function uploadFromClipboard(
   const buffer = await blob.arrayBuffer();
 
   await performUpload({
+    app: opts.app,
     data: buffer,
     filename,
     settings: opts.settings,
     editor: opts.editor,
+    activeFile: opts.app.workspace.getActiveFile(),
+    allowRename: true,
+    imageNameKey: readImageNameKey(opts.app),
   });
+}
+
+/**
+ * Read `imageNameKey` from the active note's frontmatter (used by the
+ * filename template). Returns "" when absent or unreadable.
+ */
+function readImageNameKey(app: App): string {
+  try {
+    const file = app.workspace.getActiveFile();
+    if (!file) return "";
+    const meta = app.metadataCache.getFileCache(file);
+    const value = meta?.frontmatter?.["imageNameKey"];
+    return typeof value === "string" ? value.trim() : "";
+  } catch {
+    return "";
+  }
 }
 
 function extensionFromMime(mime: string): string {
