@@ -1,5 +1,10 @@
 name: CI
 
+# Run tests on every push to master and on every PR. The release
+# workflow handles `git tag`-pushed builds and uploads `main.js` to a
+# GitHub Release — the artifact from this job would only be collected
+# once and immediately discarded, so we no longer upload it here.
+
 on:
   push:
     branches: [master]
@@ -17,7 +22,3 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
-      - uses: actions/upload-artifact@v4
-        with:
-          name: main.js
-          path: main.js
