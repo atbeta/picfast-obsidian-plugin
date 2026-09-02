@@ -12,6 +12,8 @@ Every other image uploader for Obsidian routes through PicGo / PicList / PicGo-C
 
 - 📋 **Upload from clipboard** — `Ctrl/Cmd+Shift+V` or click the ribbon icon
 - 🖱️ **Drop or paste** — configurable behaviour per paste / drop event (Off / Ask / On)
+- 🏷️ **Filename template** — rename screenshots to `<note>-<timestamp>` on upload: `{{fileName}}`, `{{imageNameKey}}` (frontmatter), `{{DATE:YYYYMMDD-HHmmss}}`, `{{originalName}}`; duplicates get `-2`, `-3`… suffixes. Empty = keep the original name. Scope is configurable (pasted only / pasted + dragged).
+- 🛡️ **Local mirror** (optional) — keep a copy of every uploaded image in `<note>.assets/` next to the note; if an upload fails with the mirror on, the image is saved locally instead so the paste never lands empty
 - 🪄 **Auto-discovery** — reads `~/.config/picfast/config.json` (Linux/macOS/Windows) and `PICFAST_URL` / `PICFAST_TOKEN` env vars; values you set in Obsidian settings always win
 - 🌐 **No CORS pain** — uses Obsidian's `requestUrl`, which goes through Node's net stack
 - 🌏 **i18n** — English + Simplified Chinese
@@ -46,6 +48,9 @@ Settings → PicFast:
 | **Base URL** | Your PicFast instance root, e.g. `https://picfast.example.com`. Auto-filled if `PICFAST_URL` env var is set, or if `~/.config/picfast/config.json` exists. |
 | **API token** | Optional. Bearer token for authenticated uploads; auto-filled from `PICFAST_TOKEN` env or CLI config. |
 | **Upload behavior** | `Off` (Obsidian default for images), `Ask each time` (recommended — shows a small menu per paste/drop), `Always upload`. |
+| **Filename template** | Empty (keep original names) or a token pattern, e.g. `{{fileName}}-{{DATE:YYYYMMDD-HHmmss}}`. Applies to pasted images by default; dragged files can be included via *Rename scope*. |
+| **Rename scope** | `Pasted images only` (default) or `Pasted and dragged images`. |
+| **Local mirror** | Off by default. When on, each uploaded image is copied to `<note name>.assets/` next to the note; failed uploads fall back to a local save so the image is never lost. |
 | **Insert format** | `Markdown` (`![](url)`), `Bare URL`, `HTML` (`<img>`), `BBCode` (`[img]url[/img]`). |
 
 ## Pairing with the `picfast` CLI
