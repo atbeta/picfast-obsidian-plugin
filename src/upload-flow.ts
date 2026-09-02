@@ -51,7 +51,16 @@ export async function performUpload(opts: UploadFlowOpts): Promise<UploadResult>
   const progress = new Notice(t().noticeUploading, 0);
   try {
     const result = await uploadImage(opts.data, filename, opts.settings);
-    opts.editor.replaceSelection(result.markdown);
+    // Build the markdown link ourselves so we always emit a protocol-
+    // prefixed URL. If we relied on `result.markdown` (a server field)
+    // and a future server returned a path-only form, cursor re-uploads
+    // would later fail with "could not locate image in vault" because
+    // `isRemotePath` only recognises http(s)/data/mailto.
+    const md = result.markdown?.trim();
+    const hasProtocol =
+        md && /^!\[[^\]]*\]\(\s*https?:\/\//.test(md);
+    const inserted = hasProtocol ? md : `![](${result.url})`;
+    opts.editor.replaceSelection(inserted);
     progress.hide();
     showSuccessNotice(filename, result.url);
 
