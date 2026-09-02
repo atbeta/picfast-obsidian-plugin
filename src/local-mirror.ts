@@ -36,7 +36,12 @@ export async function writeMirrorCopy(
 		}
 		const filePath = joinVaultPath(dirPath, filename);
 		const existing = app.vault.getAbstractFileByPath(filePath);
-		const buffer = data instanceof Uint8Array ? data.buffer as ArrayBuffer : data;
+		// Obsidian's createBinary / modifyBinary only accept ArrayBuffer.
+		// A Uint8Array's `.buffer` is the *underlying* ArrayBuffer, which
+		// can be much larger than the view when the view is a subarray of
+		// something bigger — writing the raw `.buffer` would write the
+		// whole backing store. Copy the view's bytes into a fresh buffer.
+		const buffer = toArrayBuffer(data);
 		if (existing instanceof TFile) {
 			await app.vault.modifyBinary(existing, buffer);
 		} else {
@@ -46,6 +51,24 @@ export async function writeMirrorCopy(
 	} catch (error) {
 		return { ok: false, error };
 	}
+}
+
+/**
+ * Copy `data` into a fresh `ArrayBuffer` whose length matches the input
+ * exactly. Accepts both raw `ArrayBuffer` (returned as a copy to give
+ * the caller full ownership) and `Uint8Array` views — the view case is
+ * the important one because `.buffer` is *not* safe when the view is a
+ * subarray of a larger buffer.
+ */
+function toArrayBuffer(data: ArrayBuffer | Uint8Array): ArrayBuffer {
+	if (data instanceof Uint8Array) {
+		const out = new ArrayBuffer(data.byteLength);
+		new Uint8Array(out).set(data);
+		return out;
+	}
+	// Defensive copy: the caller's buffer may be reused after we hand it
+	// to Obsidian, and `createBinary` could in theory retain a reference.
+	return data.slice(0);
 }
 
 /**
